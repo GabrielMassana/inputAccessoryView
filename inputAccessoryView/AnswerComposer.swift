@@ -66,6 +66,8 @@ class AnswerComposer: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // Important code to kept the AnswerComposer on screen after dismissing the keyboard the first time.
+    // Without this two overrided functions the AnswerComposer will go out of screen with the keyboard.
     override func canBecomeFirstResponder() -> Bool {
         
         return true
