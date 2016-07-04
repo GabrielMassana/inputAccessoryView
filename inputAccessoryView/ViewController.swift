@@ -10,11 +10,13 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    var answerComposerHeightConstraint: NSLayoutConstraint?
+    var tableViewBotomConstraint: NSLayoutConstraint?
+    
     /// A table View to show the messages entered through the textView
     lazy var tableView: UITableView = {
         
-        let tableView: UITableView = UITableView(frame: UIScreen.mainScreen().bounds,
-                                                 style: UITableViewStyle.Plain)
+        let tableView: UITableView = UITableView.newAutoLayoutView()
         
         tableView.dataSource = self
 
@@ -28,10 +30,7 @@ class ViewController: UIViewController {
     /// This view id going to be the inputAccessoryView
     lazy var answerComposer: AnswerComposer = {
        
-        let answerComposer = AnswerComposer(frame: CGRectMake(0.0,
-            CGRectGetHeight(UIScreen.mainScreen().bounds) - 60.0,
-            CGRectGetWidth(UIScreen.mainScreen().bounds),
-            60.0))
+        let answerComposer = AnswerComposer.newAutoLayoutView()
         
         return answerComposer
     }()
@@ -53,11 +52,47 @@ class ViewController: UIViewController {
         answerComposer.textView.inputAccessoryView = answerComposer
         
         registerCells()
+        
+        updateViewConstraints()
+    }
+    
+    override func updateViewConstraints() {
+        
+        super.updateViewConstraints()
+        
+        /*-----------------------*/
+
+        tableView.autoPinEdgeToSuperviewEdge(.Top)
+        
+        tableView.autoPinEdgeToSuperviewEdge(.Left)
+        
+        tableView.autoPinEdgeToSuperviewEdge(.Right)
+        
+        if tableViewBotomConstraint == nil {
+            
+            tableViewBotomConstraint = tableView.autoPinEdgeToSuperviewEdge(.Bottom,
+                                                                            withInset: 30.0)
+        }
+        
+        /*-----------------------*/
+
+        answerComposer.autoPinEdgeToSuperviewEdge(.Bottom)
+        
+        answerComposer.autoPinEdgeToSuperviewEdge(.Left)
+        
+        answerComposer.autoPinEdgeToSuperviewEdge(.Right)
+        
+        if answerComposerHeightConstraint == nil {
+            
+            answerComposerHeightConstraint = answerComposer.autoSetDimension(.Height,
+                                                                             toSize: 30.0)
+        }
     }
     
     func registerCells() {
         
-        tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: NSStringFromClass(UITableViewCell.self))
+        tableView.registerClass(UITableViewCell.self,
+                                forCellReuseIdentifier: NSStringFromClass(UITableViewCell.self))
     }
 }
 
