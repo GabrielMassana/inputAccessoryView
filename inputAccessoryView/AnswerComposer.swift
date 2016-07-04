@@ -10,8 +10,12 @@ import UIKit
 
 import PureLayout
 
-class AnswerComposer: UIView {
+let GlyphLinePadding: CGFloat = 4.0
 
+class AnswerComposer: UIView{
+
+    var numberOfLines = 1
+    
     lazy var separatorView: UIView = {
        
         var separatorView = UIView()
@@ -21,25 +25,32 @@ class AnswerComposer: UIView {
         return separatorView
     }()
     
-    lazy var textView: UITextView = {
+    lazy var textView: TextView = {
         
-        let textView = UITextView.newAutoLayoutView()
+        let textView = TextView.newAutoLayoutView()
         
         textView.textColor = UIColor.darkGrayColor()
         textView.showsVerticalScrollIndicator = false
-        textView.font = UIFont.systemFontOfSize(10.0)
+        textView.font = UIFont.systemFontOfSize(14.0)
         textView.tintColor = UIColor.darkGrayColor()
+        textView.delegate = self
         
         textView.backgroundColor = UIColor(colorLiteralRed: 0.98,
                                            green: 0.98,
                                            blue: 0.98,
                                            alpha: 1.0)
         
-        textView.textContainerInset = UIEdgeInsetsMake(4.0,
+        textView.textContainerInset = UIEdgeInsetsMake(GlyphLinePadding,
                                                        0.0,
                                                        5.0,
                                                        0.0)
         
+        
+        // Disabling textView scrolling prevents some undesired effects,
+        // like incorrect contentOffset when adding new line,
+        // and makes the textView behave similar to Apple's Messages app
+        textView.scrollEnabled = false
+
         return textView
     }()
     
@@ -57,7 +68,7 @@ class AnswerComposer: UIView {
         sendButton.setTitleColor(UIColor.blackColor(),
                                  forState: .Normal)
         
-        sendButton.titleLabel!.font = UIFont.systemFontOfSize(10.0)
+        sendButton.titleLabel!.font = UIFont.systemFontOfSize(12.0)
         sendButton.backgroundColor = UIColor.yellowColor()
         
         return sendButton
@@ -72,36 +83,27 @@ class AnswerComposer: UIView {
         
         super.init(frame: frame)
         
-        self.backgroundColor = UIColor.whiteColor()
+        backgroundColor = UIColor.whiteColor()
         
         addSubview(sendButton)
         addSubview(textView)
         addSubview(separatorView)
+        
+        backgroundColor = UIColor.blueColor()
+
+        autoresizingMask = UIViewAutoresizing.FlexibleHeight
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // Important code to kept the AnswerComposer on screen after dismissing the keyboard the first time.
-    // Without this two overrided functions the AnswerComposer will go out of screen with the keyboard.
-    override func canBecomeFirstResponder() -> Bool {
-        
-        return true
-    }
-    
-    override var inputAccessoryView: UIView {
-        
-        get{
-            
-            return self
-        }
-    }
-    
     func sendButtonPressed(sender: UIButton) {
         
         textView.resignFirstResponder()
         textView.text = ""
+        numberOfLines = 1
+        invalidateIntrinsicContentSize()
     }
     
     //MARK: - UpdateConstraints
@@ -120,10 +122,10 @@ class AnswerComposer: UIView {
         /*-----------------------*/
         
         textView.autoPinEdgeToSuperviewEdge(.Top,
-                                            withInset: 5.0)
+                                            withInset: 0.0)
         
         textView.autoPinEdgeToSuperviewEdge(.Bottom,
-                                            withInset: 5.0)
+                                            withInset: 0.0)
         
         textView.autoPinEdgeToSuperviewEdge(.Left,
                                             withInset: 14.0)
@@ -137,25 +139,32 @@ class AnswerComposer: UIView {
                                     toSize: 43.0)
         
         sendButton.autoSetDimension(.Height,
-                                    toSize: 23.0)
+                                    toSize: 21.0)
         
         sendButton.autoPinEdgeToSuperviewEdge(.Right,
                                               withInset: 10.0)
         
         sendButton.autoPinEdgeToSuperviewEdge(.Bottom,
-                                              withInset: 5.0)
+                                              withInset: 0.0)
         
         /*-----------------------*/
 
         super.updateConstraints()
     }
+    
+    override func intrinsicContentSize() -> CGSize {
+        // Calculate intrinsicContentSize that will fit all the text
+        let textSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.max))
+        return CGSize(width: bounds.width, height: textSize.height)
+    }
 }
 
 extension AnswerComposer: UITextViewDelegate {
     
-    func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
-        
-        
-        return true
+    //MARK: UITextViewDelegate
+    
+    func textViewDidChange(textView: UITextView) {
+        // Re-calculate intrinsicContentSize when text changes
+        invalidateIntrinsicContentSize()
     }
 }

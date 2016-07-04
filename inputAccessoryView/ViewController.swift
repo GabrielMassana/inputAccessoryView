@@ -8,10 +8,12 @@
 
 import UIKit
 
+let AnswerComposerHeight: CGFloat = 30.0
+
 class ViewController: UIViewController {
 
     var answerComposerHeightConstraint: NSLayoutConstraint?
-    var tableViewBotomConstraint: NSLayoutConstraint?
+    var tableViewBottomConstraint: NSLayoutConstraint?
     
     /// A table View to show the messages entered through the textView
     lazy var tableView: UITableView = {
@@ -26,14 +28,22 @@ class ViewController: UIViewController {
         return tableView
     }()
     
-    /// The UIView sunview with a UITextView to enter text.
+    /// The UIView subview with a UITextView to enter text.
     /// This view id going to be the inputAccessoryView
     lazy var answerComposer: AnswerComposer = {
        
-        let answerComposer = AnswerComposer.newAutoLayoutView()
-        
+        let answerComposer = AnswerComposer(frame: CGRect(x: 0.0,
+            y: CGRectGetHeight(UIScreen.mainScreen().bounds) - AnswerComposerHeight,
+            width: 320.0,
+            height: AnswerComposerHeight))
+
         return answerComposer
     }()
+    
+    override var inputAccessoryView: UIView? {
+        
+        return answerComposer
+    }
     
     override func viewDidLoad() {
         
@@ -41,19 +51,18 @@ class ViewController: UIViewController {
 
         view.addSubview(tableView)
         
-        // We can not add the AnswerComposer as subview of self.view with view.addSubview(answerComposer) because we will have a crash like:
-        
-        // 'UIViewControllerHierarchyInconsistency', reason: 'child view controller:<UICompatibilityInputViewController: 0x7fec9c817210> should have parent view controller:<inputAccessoryView.ViewController: 0x7fec9a4635b0> but requested parent is:<UIInputWindowController: 0x7fec9c05b000>'
-        
-        // But we can add the AnswerComposer as the Window subview
-        UIApplication.sharedApplication().keyWindow?.addSubview(answerComposer)
-        
-        // No problem now to set the inputAccessoryView
-        answerComposer.textView.inputAccessoryView = answerComposer
-        
         registerCells()
         
         updateViewConstraints()
+        
+        answerComposer.textView.becomeFirstResponder()
+        
+        print(inputAccessoryView)
+    }
+    
+    override func canBecomeFirstResponder() -> Bool {
+        
+        return true
     }
     
     override func updateViewConstraints() {
@@ -68,24 +77,10 @@ class ViewController: UIViewController {
         
         tableView.autoPinEdgeToSuperviewEdge(.Right)
         
-        if tableViewBotomConstraint == nil {
+        if tableViewBottomConstraint == nil {
             
-            tableViewBotomConstraint = tableView.autoPinEdgeToSuperviewEdge(.Bottom,
-                                                                            withInset: 30.0)
-        }
-        
-        /*-----------------------*/
-
-        answerComposer.autoPinEdgeToSuperviewEdge(.Bottom)
-        
-        answerComposer.autoPinEdgeToSuperviewEdge(.Left)
-        
-        answerComposer.autoPinEdgeToSuperviewEdge(.Right)
-        
-        if answerComposerHeightConstraint == nil {
-            
-            answerComposerHeightConstraint = answerComposer.autoSetDimension(.Height,
-                                                                             toSize: 30.0)
+            tableViewBottomConstraint = tableView.autoPinEdgeToSuperviewEdge(.Bottom,
+                                                                             withInset: AnswerComposerHeight)
         }
     }
     
