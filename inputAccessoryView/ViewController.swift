@@ -16,6 +16,12 @@ class ViewController: UIViewController {
 
     var tableViewBottomConstraint: NSLayoutConstraint?
     
+    var lastKeyboardHeight: CGFloat = 0.0
+    
+    var isKeyboardHidding = false
+    
+    var lastInputAccessoryViewHeight: CGFloat = 0.0
+    
     /// A table View to show the messages entered through the textView
     lazy var tableView: UITableView = {
         
@@ -40,6 +46,8 @@ class ViewController: UIViewController {
         
         let answerComposer = AnswerComposer(frame: frame)
 
+        answerComposer.delegate = self
+        
         return answerComposer
     }()
     
@@ -56,6 +64,28 @@ class ViewController: UIViewController {
         updateViewConstraints()
         
         view.backgroundColor = UIColor.orangeColor()
+        
+        /*
+         [[NSNotificationCenter defaultCenter] addObserver:self
+         selector:@selector(keyboardFrameWillChange:)
+         name:UIKeyboardWillChangeFrameNotification
+         object:nil];
+         
+         [[NSNotificationCenter defaultCenter] addObserver:self
+         selector:@selector(keyboardWillHide:)
+         name:UIKeyboardWillHideNotification
+         object:nil];
+         */
+        
+        NSNotificationCenter.defaultCenter().addObserver(self,
+                                                         selector: #selector(keyboardWillShow(_:)),
+                                                         name: UIKeyboardWillChangeFrameNotification,
+                                                         object: nil)
+        
+        NSNotificationCenter.defaultCenter().addObserver(self,
+                                                         selector: #selector(keyboardWillHide(_:)),
+                                                         name: UIKeyboardWillHideNotification,
+                                                         object: nil)
     }
     
     //MARK: - UIResponder
@@ -98,6 +128,51 @@ class ViewController: UIViewController {
         tableView.registerClass(UITableViewCell.self,
                                 forCellReuseIdentifier: NSStringFromClass(UITableViewCell.self))
     }
+    
+    // MARK: - NotificationActions
+    
+    func keyboardWillShow(notification: NSNotification) {
+        
+        if !isKeyboardHidding {
+            
+            let keyboardInfo = notification.userInfo as? [String : AnyObject]
+            
+            if let keyboardFrameBegin = keyboardInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
+                
+                let keyboardFrameBeginRect = keyboardFrameBegin.CGRectValue()
+                
+                tableViewBottomConstraint?.constant = -CGRectGetHeight(keyboardFrameBeginRect)
+                
+                lastKeyboardHeight = CGRectGetHeight(keyboardFrameBeginRect)
+                
+                tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
+                                                  y: tableView.contentOffset.y + lastKeyboardHeight)
+            }
+        }
+        else {
+            
+            isKeyboardHidding = false
+        }
+    }
+    
+    func keyboardWillHide(notification: NSNotification) {
+        
+        tableViewBottomConstraint?.constant = -lastInputAccessoryViewHeight
+        
+        isKeyboardHidding = true
+
+        tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
+                                          y: tableView.contentOffset.y - lastKeyboardHeight)
+        
+        lastKeyboardHeight = lastInputAccessoryViewHeight
+    }
+    
+    // MARK: - Deinit
+    
+    deinit {
+        
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
 }
 
 extension ViewController: UITableViewDataSource {
@@ -116,5 +191,15 @@ extension ViewController: UITableViewDataSource {
         cell.textLabel?.text = "textLabel"
         
         return cell
+    }
+}
+
+extension ViewController: AnswerComposerDelegate {
+    
+    func didUpdatedInputAccessoryViewHeight(height: CGFloat) {
+        
+        lastInputAccessoryViewHeight = height
+        
+        tableViewBottomConstraint?.constant = -lastKeyboardHeight
     }
 }

@@ -16,9 +16,16 @@ let GlyphLinePadding: CGFloat = 3.0
 /// The maximum number of lines for the text view.
 let MaxNumberOfLines: Int = 5
 
+protocol AnswerComposerDelegate: NSObjectProtocol {
+    
+    func didUpdatedInputAccessoryViewHeight(height: CGFloat)
+}
+
 class AnswerComposer: UIView {
 
     //MARK: - Accessors
+    
+    weak var delegate: AnswerComposerDelegate?
     
     var inputAccessoryViewHeight: NSLayoutConstraint?
 
@@ -181,15 +188,21 @@ class AnswerComposer: UIView {
 
         let numberLines: Int = Int((intrinsicContentSize().height / (textView.font!.lineHeight + GlyphLinePadding)))
         
+        var newInputAccessoryViewHeight: CGFloat = 0.0
+        
         // Fix the inputAccessoryView Height if it is over 5 lines.
         if numberLines > MaxNumberOfLines {
             
-            inputAccessoryViewHeight?.constant = (textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)
+            newInputAccessoryViewHeight = ((textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)) + 5.5
         }
         else {
             
-            inputAccessoryViewHeight?.constant = intrinsicContentSize().height
+            newInputAccessoryViewHeight = intrinsicContentSize().height
         }
+        
+        delegate?.didUpdatedInputAccessoryViewHeight(newInputAccessoryViewHeight)
+        
+        inputAccessoryViewHeight?.constant = newInputAccessoryViewHeight
     }
     
     override func intrinsicContentSize() -> CGSize {
