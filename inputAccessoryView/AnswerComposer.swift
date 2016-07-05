@@ -10,7 +10,9 @@ import UIKit
 
 import PureLayout
 
-let GlyphLinePadding: CGFloat = 4.0
+let GlyphLinePadding: CGFloat = 3.0
+
+let MaxNumberOfLines: Int = 5
 
 class AnswerComposer: UIView{
 
@@ -42,15 +44,18 @@ class AnswerComposer: UIView{
         
         textView.textContainerInset = UIEdgeInsetsMake(GlyphLinePadding,
                                                        0.0,
-                                                       5.0,
+                                                       2.0,
                                                        0.0)
         
-        
+        textView.layoutManager.delegate = self;
+
         // Disabling textView scrolling prevents some undesired effects,
         // like incorrect contentOffset when adding new line,
         // and makes the textView behave similar to Apple's Messages app
         textView.scrollEnabled = false
 
+        textView.clipsToBounds = true
+        
         return textView
     }()
     
@@ -74,6 +79,8 @@ class AnswerComposer: UIView{
         return sendButton
     }()
     
+    var textViewHeight: NSLayoutConstraint?
+    
     convenience init() {
         
         self.init(frame: CGRectZero)
@@ -92,6 +99,8 @@ class AnswerComposer: UIView{
         backgroundColor = UIColor.blueColor()
 
         autoresizingMask = UIViewAutoresizing.FlexibleHeight
+        
+        clipsToBounds = true
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -121,8 +130,8 @@ class AnswerComposer: UIView{
         
         /*-----------------------*/
         
-        textView.autoPinEdgeToSuperviewEdge(.Top,
-                                            withInset: 0.0)
+//        textView.autoPinEdgeToSuperviewEdge(.Top,
+//                                            withInset: 3.0)
         
         textView.autoPinEdgeToSuperviewEdge(.Bottom,
                                             withInset: 0.0)
@@ -133,6 +142,26 @@ class AnswerComposer: UIView{
         textView.autoPinEdgeToSuperviewEdge(.Right,
                                             withInset: 68.0)
 
+//        if textViewHeight == nil {
+//            
+//            textView.autoSetDimension(.Height, toSize: intrinsicContentSize().height)
+//        }
+        
+//        for (NSLayoutConstraint *constraint in self.constraints) {
+//            if (constraint.firstAttribute == NSLayoutAttributeHeight) {
+//                self.heightConstraint = constraint;
+//                break;
+//            }
+//        }
+        
+        for constraint in self.constraints {
+            
+            if constraint.firstAttribute == .Height {
+                
+                textViewHeight = constraint
+            }
+        }
+        
         /*-----------------------*/
         
         sendButton.autoSetDimension(.Width,
@@ -152,11 +181,59 @@ class AnswerComposer: UIView{
         super.updateConstraints()
     }
     
+    override func layoutSubviews() {
+        
+        super.layoutSubviews()
+
+        print("layout: \(intrinsicContentSize())")
+        
+        textViewHeight?.constant = intrinsicContentSize().height
+        
+        let numberLines: Int = Int((intrinsicContentSize().height / (textView.font!.lineHeight + GlyphLinePadding)))
+        
+        print(numberLines)
+        
+        if numberLines > MaxNumberOfLines {
+            
+            textViewHeight?.constant = (textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)
+        }
+        
+        print(textViewHeight)
+    }
+    
     override func intrinsicContentSize() -> CGSize {
+    
         // Calculate intrinsicContentSize that will fit all the text
         let textSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.max))
-        return CGSize(width: bounds.width, height: textSize.height)
+        
+//        let numberLines: Int = Int((textSize.height / (textView.font!.lineHeight + GlyphLinePadding)))
+//
+        var size = CGSizeZero
+//
+//        if numberLines > 5 {
+//            
+//            size = CGSize(width: UIViewNoIntrinsicMetric, height: UIViewNoIntrinsicMetric)
+//        }
+//        else {
+        
+            size = CGSize(width: UIViewNoIntrinsicMetric, height: textSize.height)
+//        }
+//
+//        print(size)
+        
+        return size
     }
+    
+//    override func intrinsicContentSize() -> CGSize {
+//
+//        var size = CGSizeZero
+//
+//        size = CGSize(width: UIViewNoIntrinsicMetric, height: UIViewNoIntrinsicMetric)
+//
+//        print(size)
+//
+//        return size
+//    }
 }
 
 extension AnswerComposer: UITextViewDelegate {
@@ -164,7 +241,24 @@ extension AnswerComposer: UITextViewDelegate {
     //MARK: UITextViewDelegate
     
     func textViewDidChange(textView: UITextView) {
-        // Re-calculate intrinsicContentSize when text changes
-        invalidateIntrinsicContentSize()
+        
+//        let textSize = self.textView.sizeThatFits(CGSize(width: self.bounds.width, height: CGFloat.max))
+//        let numberLines: Int = Int((textSize.height / (self.textView.font!.lineHeight + GlyphLinePadding)))
+//        
+//        print("numberLines \(numberLines)")
+//        self.textView.systemLayoutSizeFittingSize(UILayoutFittingCompressedSize)
+
+//        if numberLines <= 5 {
+        
+            // Re-calculate intrinsicContentSize when text changes
+            invalidateIntrinsicContentSize()
+//        }
+    }
+}
+
+extension AnswerComposer: NSLayoutManagerDelegate {
+    func layoutManager(layoutManager: NSLayoutManager, lineSpacingAfterGlyphAtIndex glyphIndex: Int, withProposedLineFragmentRect rect: CGRect) -> CGFloat {
+        
+        return GlyphLinePadding
     }
 }
