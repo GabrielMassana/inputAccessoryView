@@ -10,14 +10,18 @@ import UIKit
 
 import PureLayout
 
+/// Constant to help text padding. Helps to do not overlap emojis.
 let GlyphLinePadding: CGFloat = 3.0
 
+/// The maximum number of lines for the text view.
 let MaxNumberOfLines: Int = 5
 
-class AnswerComposer: UIView{
+class AnswerComposer: UIView {
 
-    var numberOfLines = 1
+    //MARK: - Accessors
     
+    var inputAccessoryViewHeight: NSLayoutConstraint?
+
     lazy var separatorView: UIView = {
        
         var separatorView = UIView()
@@ -54,8 +58,6 @@ class AnswerComposer: UIView{
         // and makes the textView behave similar to Apple's Messages app
         textView.scrollEnabled = false
 
-        textView.clipsToBounds = true
-        
         return textView
     }()
     
@@ -79,8 +81,8 @@ class AnswerComposer: UIView{
         return sendButton
     }()
     
-    var textViewHeight: NSLayoutConstraint?
-    
+    //MARK: - Init
+
     convenience init() {
         
         self.init(frame: CGRectZero)
@@ -98,24 +100,25 @@ class AnswerComposer: UIView{
         
         backgroundColor = UIColor.blueColor()
 
-        autoresizingMask = UIViewAutoresizing.FlexibleHeight
-        
+        // Important to clip the view to the inputAccessoryView
         clipsToBounds = true
     }
     
     required init?(coder aDecoder: NSCoder) {
+        
         fatalError("init(coder:) has not been implemented")
     }
+    
+    //MARK: - ButtonActions
     
     func sendButtonPressed(sender: UIButton) {
         
         textView.resignFirstResponder()
         textView.text = ""
-        numberOfLines = 1
         invalidateIntrinsicContentSize()
     }
     
-    //MARK: - UpdateConstraints
+    //MARK: - Constraints
     
     override func updateConstraints() {
         
@@ -130,9 +133,6 @@ class AnswerComposer: UIView{
         
         /*-----------------------*/
         
-//        textView.autoPinEdgeToSuperviewEdge(.Top,
-//                                            withInset: 3.0)
-        
         textView.autoPinEdgeToSuperviewEdge(.Bottom,
                                             withInset: 0.0)
         
@@ -141,26 +141,6 @@ class AnswerComposer: UIView{
 
         textView.autoPinEdgeToSuperviewEdge(.Right,
                                             withInset: 68.0)
-
-//        if textViewHeight == nil {
-//            
-//            textView.autoSetDimension(.Height, toSize: intrinsicContentSize().height)
-//        }
-        
-//        for (NSLayoutConstraint *constraint in self.constraints) {
-//            if (constraint.firstAttribute == NSLayoutAttributeHeight) {
-//                self.heightConstraint = constraint;
-//                break;
-//            }
-//        }
-        
-        for constraint in self.constraints {
-            
-            if constraint.firstAttribute == .Height {
-                
-                textViewHeight = constraint
-            }
-        }
         
         /*-----------------------*/
         
@@ -178,6 +158,20 @@ class AnswerComposer: UIView{
         
         /*-----------------------*/
 
+        // Search and store the inputAccessoryView Height constraint.
+        if inputAccessoryViewHeight == nil {
+            
+            for constraint in self.constraints {
+                
+                if constraint.firstAttribute == .Height {
+                    
+                    inputAccessoryViewHeight = constraint
+                }
+            }
+        }
+        
+        /*-----------------------*/
+
         super.updateConstraints()
     }
     
@@ -185,55 +179,30 @@ class AnswerComposer: UIView{
         
         super.layoutSubviews()
 
-        print("layout: \(intrinsicContentSize())")
-        
-        textViewHeight?.constant = intrinsicContentSize().height
-        
         let numberLines: Int = Int((intrinsicContentSize().height / (textView.font!.lineHeight + GlyphLinePadding)))
         
-        print(numberLines)
-        
+        // Fix the inputAccessoryView Height if it is over 5 lines.
         if numberLines > MaxNumberOfLines {
             
-            textViewHeight?.constant = (textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)
+            inputAccessoryViewHeight?.constant = (textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)
         }
-        
-        print(textViewHeight)
+        else {
+            
+            inputAccessoryViewHeight?.constant = intrinsicContentSize().height
+        }
     }
     
     override func intrinsicContentSize() -> CGSize {
     
-        // Calculate intrinsicContentSize that will fit all the text
-        let textSize = textView.sizeThatFits(CGSize(width: textView.bounds.width, height: CGFloat.max))
+        // Calculate CGSize that will fit all the text
+        let size = CGSize(width: textView.bounds.width,
+                                  height: CGFloat.max)
         
-//        let numberLines: Int = Int((textSize.height / (textView.font!.lineHeight + GlyphLinePadding)))
-//
-        var size = CGSizeZero
-//
-//        if numberLines > 5 {
-//            
-//            size = CGSize(width: UIViewNoIntrinsicMetric, height: UIViewNoIntrinsicMetric)
-//        }
-//        else {
+        let textSize = textView.sizeThatFits(size)
         
-            size = CGSize(width: UIViewNoIntrinsicMetric, height: textSize.height)
-//        }
-//
-//        print(size)
-        
-        return size
+        return CGSize(width: UIViewNoIntrinsicMetric,
+                      height: textSize.height)
     }
-    
-//    override func intrinsicContentSize() -> CGSize {
-//
-//        var size = CGSizeZero
-//
-//        size = CGSize(width: UIViewNoIntrinsicMetric, height: UIViewNoIntrinsicMetric)
-//
-//        print(size)
-//
-//        return size
-//    }
 }
 
 extension AnswerComposer: UITextViewDelegate {
@@ -242,21 +211,15 @@ extension AnswerComposer: UITextViewDelegate {
     
     func textViewDidChange(textView: UITextView) {
         
-//        let textSize = self.textView.sizeThatFits(CGSize(width: self.bounds.width, height: CGFloat.max))
-//        let numberLines: Int = Int((textSize.height / (self.textView.font!.lineHeight + GlyphLinePadding)))
-//        
-//        print("numberLines \(numberLines)")
-//        self.textView.systemLayoutSizeFittingSize(UILayoutFittingCompressedSize)
-
-//        if numberLines <= 5 {
-        
-            // Re-calculate intrinsicContentSize when text changes
-            invalidateIntrinsicContentSize()
-//        }
+        // Force to recalculate intrinsicContentSize when text changes
+        invalidateIntrinsicContentSize()
     }
 }
 
 extension AnswerComposer: NSLayoutManagerDelegate {
+    
+    //MARK: NSLayoutManagerDelegate
+    
     func layoutManager(layoutManager: NSLayoutManager, lineSpacingAfterGlyphAtIndex glyphIndex: Int, withProposedLineFragmentRect rect: CGRect) -> CGFloat {
         
         return GlyphLinePadding

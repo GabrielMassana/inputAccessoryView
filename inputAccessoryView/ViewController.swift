@@ -12,7 +12,8 @@ let AnswerComposerHeight: CGFloat = 30.0
 
 class ViewController: UIViewController {
 
-    var answerComposerHeightConstraint: NSLayoutConstraint?
+    //MARK: - Accessors
+
     var tableViewBottomConstraint: NSLayoutConstraint?
     
     /// A table View to show the messages entered through the textView
@@ -29,22 +30,21 @@ class ViewController: UIViewController {
     }()
     
     /// The UIView subview with a UITextView to enter text.
-    /// This view id going to be the inputAccessoryView
+    /// This view will be returned as the inputAccessoryView
     lazy var answerComposer: AnswerComposer = {
        
-        let answerComposer = AnswerComposer(frame: CGRect(x: 0.0,
-            y: CGRectGetHeight(UIScreen.mainScreen().bounds) - AnswerComposerHeight,
-            width: 320.0,
-            height: AnswerComposerHeight))
+        let frame = CGRect(x: 0.0,
+                           y: CGRectGetHeight(UIScreen.mainScreen().bounds) - AnswerComposerHeight,
+                           width: 320.0,
+                           height: AnswerComposerHeight)
+        
+        let answerComposer = AnswerComposer(frame: frame)
 
         return answerComposer
     }()
     
-    override var inputAccessoryView: UIView? {
-        
-        return answerComposer
-    }
-    
+    //MARK: - ViewLifeCycle
+
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -55,9 +55,14 @@ class ViewController: UIViewController {
         
         updateViewConstraints()
         
-        answerComposer.textView.becomeFirstResponder()
+        view.backgroundColor = UIColor.orangeColor()
+    }
+    
+    //MARK: - UIResponder
+    
+    override var inputAccessoryView: UIView? {
         
-        print(inputAccessoryView)
+        return answerComposer
     }
     
     override func canBecomeFirstResponder() -> Bool {
@@ -65,6 +70,8 @@ class ViewController: UIViewController {
         return true
     }
     
+    //MARK: - Constraints
+
     override func updateViewConstraints() {
         
         super.updateViewConstraints()
@@ -84,6 +91,8 @@ class ViewController: UIViewController {
         }
     }
     
+    //MARK: - RegisterCells
+
     func registerCells() {
         
         tableView.registerClass(UITableViewCell.self,
