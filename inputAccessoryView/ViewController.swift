@@ -11,14 +11,10 @@ import UIKit
 let AnswerComposerHeight: CGFloat = 45.0
 
 class ViewController: UIViewController {
-
+    
     //MARK: - Accessors
-
-    var tableViewBottomConstraint: NSLayoutConstraint?
     
-    var lastKeyboardHeight: CGFloat = 0.0
-    
-    var isKeyboardHidding = false
+//    var lastKeyboardHeight: CGFloat = 0.0
     
     var lastInputAccessoryViewHeight: CGFloat = 0.0
     
@@ -28,7 +24,7 @@ class ViewController: UIViewController {
         let tableView: UITableView = UITableView.newAutoLayoutView()
         
         tableView.dataSource = self
-
+        
         // Important to allow pan down while dismissing the keyboard.
         tableView.keyboardDismissMode = UIScrollViewKeyboardDismissMode.Interactive
         
@@ -38,25 +34,25 @@ class ViewController: UIViewController {
     /// The UIView subview with a UITextView to enter text.
     /// This view will be returned as the inputAccessoryView
     lazy var answerComposer: AnswerComposer = {
-       
+        
         let frame = CGRect(x: 0.0,
                            y: CGRectGetHeight(UIScreen.mainScreen().bounds) - AnswerComposerHeight,
                            width: 320.0,
                            height: AnswerComposerHeight)
         
         let answerComposer = AnswerComposer(frame: frame)
-
+        
         answerComposer.delegate = self
         
         return answerComposer
     }()
     
     //MARK: - ViewLifeCycle
-
+    
     override func viewDidLoad() {
         
         super.viewDidLoad()
-
+        
         view.addSubview(tableView)
         
         registerCells()
@@ -67,7 +63,7 @@ class ViewController: UIViewController {
         
         NSNotificationCenter.defaultCenter().addObserver(self,
                                                          selector: #selector(keyboardWillShow(_:)),
-                                                         name: UIKeyboardWillChangeFrameNotification,
+                                                         name: UIKeyboardWillShowNotification,
                                                          object: nil)
         
         NSNotificationCenter.defaultCenter().addObserver(self,
@@ -89,28 +85,24 @@ class ViewController: UIViewController {
     }
     
     //MARK: - Constraints
-
+    
     override func updateViewConstraints() {
         
         super.updateViewConstraints()
         
         /*-----------------------*/
-
+        
         tableView.autoPinEdgeToSuperviewEdge(.Top)
         
         tableView.autoPinEdgeToSuperviewEdge(.Left)
         
         tableView.autoPinEdgeToSuperviewEdge(.Right)
         
-        if tableViewBottomConstraint == nil {
-            
-            tableViewBottomConstraint = tableView.autoPinEdgeToSuperviewEdge(.Bottom,
-                                                                             withInset: AnswerComposerHeight)
-        }
+        tableView.autoPinEdgeToSuperviewEdge(.Bottom)
     }
     
     //MARK: - RegisterCells
-
+    
     func registerCells() {
         
         tableView.registerClass(UITableViewCell.self,
@@ -121,38 +113,95 @@ class ViewController: UIViewController {
     
     func keyboardWillShow(notification: NSNotification) {
         
-        if !isKeyboardHidding {
+        print("*******-------******")
+        
+        print("keyboardWillShow start \(tableView.contentInset)")
+        print("keyboardWillShow start \(tableView.contentOffset)")
+
+        let keyboardInfo = notification.userInfo as? [String : AnyObject]
+        
+        if let keyboardFrameEnd = keyboardInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue,
+        let keyboardFrameBegin = keyboardInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue {
             
-            let keyboardInfo = notification.userInfo as? [String : AnyObject]
+            let keyboardFrameEndRect = keyboardFrameEnd.CGRectValue()
+            let keyboardFrameBeginRect = keyboardFrameBegin.CGRectValue()
             
-            if let keyboardFrameBegin = keyboardInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue {
-                
-                let keyboardFrameBeginRect = keyboardFrameBegin.CGRectValue()
-                
-                tableViewBottomConstraint?.constant = -CGRectGetHeight(keyboardFrameBeginRect)
-                
-                lastKeyboardHeight = CGRectGetHeight(keyboardFrameBeginRect)
-                
-                tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
-                                                  y: tableView.contentOffset.y + lastKeyboardHeight)
-            }
-        }
-        else {
+            print("UIKeyboardFrameBeginUserInfoKey \(keyboardInfo?[UIKeyboardFrameBeginUserInfoKey])")
+            print("UIKeyboardFrameEndUserInfoKey   \(keyboardInfo?[UIKeyboardFrameEndUserInfoKey])")
+
+            print("EndRect: \(CGRectGetHeight(keyboardFrameEndRect))")
+            print("contentOffset.y: \(tableView.contentOffset.y)")
+            print("Height: \(lastInputAccessoryViewHeight)")
+            print("new.y: \(tableView.contentOffset.y + CGRectGetHeight(keyboardFrameEndRect) - lastInputAccessoryViewHeight)")
             
-            isKeyboardHidding = false
+            tableView.contentInset = UIEdgeInsets(top: tableView.contentInset.top,
+                                                  left: 0.0,
+                                                  bottom: CGRectGetHeight(keyboardFrameEndRect),
+                                                  right: 0.0)
+            
+            let yChange = keyboardFrameBeginRect.origin.y - keyboardFrameEndRect.origin.y
+            
+            print("yChange \(yChange)")
+            
+            tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
+                                              y: tableView.contentOffset.y + yChange)
+            
+
+            
+            
+            print("keyboardWillShow finish \(tableView.contentInset)")
+            print("keyboardWillShow finish \(tableView.contentOffset)")
         }
     }
     
     func keyboardWillHide(notification: NSNotification) {
         
-        tableViewBottomConstraint?.constant = -lastInputAccessoryViewHeight
         
-        isKeyboardHidding = true
+        // do here
+        print("*** keyboardWillHide \(tableView.contentInset)")
+        print("*** keyboardWillHide \(tableView.contentOffset)")
+        
+        print("*******-------******")
+        
+        print("*** keyboardWillHide start \(tableView.contentInset)")
+        print("*** keyboardWillHide start \(tableView.contentOffset)")
 
-        tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
-                                          y: tableView.contentOffset.y - lastKeyboardHeight)
         
-        lastKeyboardHeight = lastInputAccessoryViewHeight
+        let keyboardInfo = notification.userInfo as? [String : AnyObject]
+        
+        if let keyboardFrameEnd = keyboardInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue,
+            let keyboardFrameBegin = keyboardInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue {
+            
+            let keyboardFrameEndRect = keyboardFrameEnd.CGRectValue()
+            let keyboardFrameBeginRect = keyboardFrameBegin.CGRectValue()
+            
+            let keyboardHeightChange = CGRectGetHeight(keyboardFrameBeginRect) - CGRectGetHeight(keyboardFrameEndRect)
+            
+            print("*** Begin: \(CGRectGetHeight(keyboardFrameBeginRect))")
+            print("*** End: \(CGRectGetHeight(keyboardFrameEndRect))")
+            
+            print("*** keyboardHeightChange: \(keyboardHeightChange)")
+            
+            
+            
+            tableView.contentInset = UIEdgeInsets(top: tableView.contentInset.top,
+                                                  left: 0.0,
+                                                  bottom: CGRectGetHeight(keyboardFrameEndRect),
+                                                  right: 0.0)
+            
+            let yChange = keyboardFrameBeginRect.origin.y - keyboardFrameEndRect.origin.y
+            
+            print("yChange \(yChange)")
+            
+            tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
+                                              y: tableView.contentOffset.y + yChange)
+            
+            print("*** keyboardWillHide finish \(tableView.contentInset)")
+            print("*** keyboardWillHide finish \(tableView.contentOffset)")
+            
+        }
+        
+        
     }
     
     // MARK: - Deinit
@@ -168,7 +217,7 @@ extension ViewController: UITableViewDataSource {
     //MARK: - UITableViewDataSource
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-
+        
         return 20
     }
     
@@ -188,6 +237,6 @@ extension ViewController: AnswerComposerDelegate {
         
         lastInputAccessoryViewHeight = height
         
-        tableViewBottomConstraint?.constant = -lastKeyboardHeight
+        print("+++++++ height: \(height)")
     }
 }
