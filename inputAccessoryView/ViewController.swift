@@ -8,7 +8,7 @@
 
 import UIKit
 
-let AnswerComposerHeight: CGFloat = 30.0
+let AnswerComposerHeight: CGFloat = 45.0
 
 class ViewController: UIViewController {
 
@@ -64,18 +64,6 @@ class ViewController: UIViewController {
         updateViewConstraints()
         
         view.backgroundColor = UIColor.orangeColor()
-        
-        /*
-         [[NSNotificationCenter defaultCenter] addObserver:self
-         selector:@selector(keyboardFrameWillChange:)
-         name:UIKeyboardWillChangeFrameNotification
-         object:nil];
-         
-         [[NSNotificationCenter defaultCenter] addObserver:self
-         selector:@selector(keyboardWillHide:)
-         name:UIKeyboardWillHideNotification
-         object:nil];
-         */
         
         NSNotificationCenter.defaultCenter().addObserver(self,
                                                          selector: #selector(keyboardWillShow(_:)),

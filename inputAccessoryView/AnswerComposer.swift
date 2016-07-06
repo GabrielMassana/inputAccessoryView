@@ -13,6 +13,9 @@ import PureLayout
 /// Constant to help text padding. Helps to do not overlap emojis.
 let GlyphLinePadding: CGFloat = 3.0
 
+let TextViewBottomInset: CGFloat = 10.0
+let TextViewTopInset: CGFloat = 10.0
+
 /// The maximum number of lines for the text view.
 let MaxNumberOfLines: Int = 5
 
@@ -58,8 +61,12 @@ class AnswerComposer: UIView {
                                                        2.0,
                                                        0.0)
         
+        textView.layer.cornerRadius = 5.0
+        textView.layer.borderColor = UIColor.darkGrayColor().CGColor
+        textView.layer.borderWidth = 0.5
+        
         textView.layoutManager.delegate = self;
-
+        
         // Disabling textView scrolling prevents some undesired effects,
         // like incorrect contentOffset when adding new line,
         // and makes the textView behave similar to Apple's Messages app
@@ -83,7 +90,15 @@ class AnswerComposer: UIView {
                                  forState: .Normal)
         
         sendButton.titleLabel!.font = UIFont.systemFontOfSize(12.0)
-        sendButton.backgroundColor = UIColor.yellowColor()
+
+        sendButton.backgroundColor = UIColor(colorLiteralRed: 0.98,
+                                             green: 0.98,
+                                             blue: 0.98,
+                                             alpha: 1.0)
+        
+        sendButton.layer.cornerRadius = 5.0
+        sendButton.layer.borderColor = UIColor.darkGrayColor().CGColor
+        sendButton.layer.borderWidth = 0.5
         
         return sendButton
     }()
@@ -104,8 +119,6 @@ class AnswerComposer: UIView {
         addSubview(sendButton)
         addSubview(textView)
         addSubview(separatorView)
-        
-        backgroundColor = UIColor.blueColor()
 
         // Important to clip the view to the inputAccessoryView
         clipsToBounds = true
@@ -141,7 +154,7 @@ class AnswerComposer: UIView {
         /*-----------------------*/
         
         textView.autoPinEdgeToSuperviewEdge(.Bottom,
-                                            withInset: 0.0)
+                                            withInset: TextViewBottomInset)
         
         textView.autoPinEdgeToSuperviewEdge(.Left,
                                             withInset: 14.0)
@@ -161,7 +174,7 @@ class AnswerComposer: UIView {
                                               withInset: 10.0)
         
         sendButton.autoPinEdgeToSuperviewEdge(.Bottom,
-                                              withInset: 0.0)
+                                              withInset: TextViewBottomInset)
         
         /*-----------------------*/
 
@@ -200,9 +213,9 @@ class AnswerComposer: UIView {
             newInputAccessoryViewHeight = intrinsicContentSize().height
         }
         
-        delegate?.didUpdatedInputAccessoryViewHeight(newInputAccessoryViewHeight)
+        delegate?.didUpdatedInputAccessoryViewHeight(newInputAccessoryViewHeight + TextViewBottomInset + TextViewTopInset)
         
-        inputAccessoryViewHeight?.constant = newInputAccessoryViewHeight
+        inputAccessoryViewHeight?.constant = newInputAccessoryViewHeight + TextViewBottomInset + TextViewTopInset
     }
     
     override func intrinsicContentSize() -> CGSize {
