@@ -207,7 +207,7 @@ class AnswerComposer: UIView {
         // Fix the inputAccessoryView Height if it is over 5 lines.
         if numberLines > MaxNumberOfLines {
             
-            newInputAccessoryViewHeight = ((textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)) //+ 5.5
+            newInputAccessoryViewHeight = ((textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)) + 5.5
         }
         else {
             
