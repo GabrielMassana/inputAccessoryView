@@ -14,25 +14,21 @@ class ViewController: UIViewController {
     
     //MARK: - Accessors
     
-//    var lastKeyboardHeight: CGFloat = 0.0
-    
-    var lastInputAccessoryViewHeight: CGFloat = 0.0
-    
-    /// A table View to show the messages entered through the textView
+    /// A table View to show the messages entered through the textView.
     lazy var tableView: UITableView = {
         
         let tableView: UITableView = UITableView.newAutoLayoutView()
         
         tableView.dataSource = self
         
-        // Important to allow pan down while dismissing the keyboard.
+        // Important to allow pan down to dismiss the keyboard.
         tableView.keyboardDismissMode = UIScrollViewKeyboardDismissMode.Interactive
         
         return tableView
     }()
     
-    /// The UIView subview with a UITextView to enter text.
-    /// This view will be returned as the inputAccessoryView
+    /// The UIView subclass with a UITextView and a UIButton to enter text.
+    /// This subclass will be returned as the UIResponder inputAccessoryView.
     lazy var answerComposer: AnswerComposer = {
         
         let frame = CGRect(x: 0.0,
@@ -113,95 +109,53 @@ class ViewController: UIViewController {
     
     func keyboardWillShow(notification: NSNotification) {
         
-        print("*******-------******")
-        
-        print("keyboardWillShow start \(tableView.contentInset)")
-        print("keyboardWillShow start \(tableView.contentOffset)")
+        if let keyboardInfo = notification.userInfo as? [String : AnyObject],
+            let keyboardFrameEndValue = keyboardInfo[UIKeyboardFrameEndUserInfoKey] as? NSValue,
+            let keyboardFrameBeginValue = keyboardInfo[UIKeyboardFrameBeginUserInfoKey] as? NSValue {
+            
+            // CGRect from NSValue
+            let keyboardFrameEndRect = keyboardFrameEndValue.CGRectValue()
+            let keyboardFrameBeginRect = keyboardFrameBeginValue.CGRectValue()
+            
+            // Store contentOffset.y before changing contentInset. Sometimes get updated after updating contentInset.
+            let contentOffsetY = tableView.contentOffset.y
+            
+            // Origin y change
+            let keyboardOriginYChange = keyboardFrameBeginRect.origin.y - keyboardFrameEndRect.origin.y
 
-        let keyboardInfo = notification.userInfo as? [String : AnyObject]
-        
-        if let keyboardFrameEnd = keyboardInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue,
-        let keyboardFrameBegin = keyboardInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue {
-            
-            let keyboardFrameEndRect = keyboardFrameEnd.CGRectValue()
-            let keyboardFrameBeginRect = keyboardFrameBegin.CGRectValue()
-            
-            print("UIKeyboardFrameBeginUserInfoKey \(keyboardInfo?[UIKeyboardFrameBeginUserInfoKey])")
-            print("UIKeyboardFrameEndUserInfoKey   \(keyboardInfo?[UIKeyboardFrameEndUserInfoKey])")
-
-            print("EndRect: \(CGRectGetHeight(keyboardFrameEndRect))")
-            print("contentOffset.y: \(tableView.contentOffset.y)")
-            print("Height: \(lastInputAccessoryViewHeight)")
-            print("new.y: \(tableView.contentOffset.y + CGRectGetHeight(keyboardFrameEndRect) - lastInputAccessoryViewHeight)")
-            
+            // Update contentInset and contentOffset to avoid jumps while sowing the keyboard
             tableView.contentInset = UIEdgeInsets(top: tableView.contentInset.top,
                                                   left: 0.0,
                                                   bottom: CGRectGetHeight(keyboardFrameEndRect),
                                                   right: 0.0)
             
-            let yChange = keyboardFrameBeginRect.origin.y - keyboardFrameEndRect.origin.y
-            
-            print("yChange \(yChange)")
-            
             tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
-                                              y: tableView.contentOffset.y + yChange)
-            
-
-            
-            
-            print("keyboardWillShow finish \(tableView.contentInset)")
-            print("keyboardWillShow finish \(tableView.contentOffset)")
+                                              y: contentOffsetY + keyboardOriginYChange)
         }
     }
     
     func keyboardWillHide(notification: NSNotification) {
         
-        
-        // do here
-        print("*** keyboardWillHide \(tableView.contentInset)")
-        print("*** keyboardWillHide \(tableView.contentOffset)")
-        
-        print("*******-------******")
-        
-        print("*** keyboardWillHide start \(tableView.contentInset)")
-        print("*** keyboardWillHide start \(tableView.contentOffset)")
-
-        
-        let keyboardInfo = notification.userInfo as? [String : AnyObject]
-        
-        if let keyboardFrameEnd = keyboardInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue,
-            let keyboardFrameBegin = keyboardInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue {
+        if let keyboardInfo = notification.userInfo as? [String : AnyObject],
+            let keyboardFrameEndValue = keyboardInfo[UIKeyboardFrameEndUserInfoKey] as? NSValue,
+            let keyboardFrameBeginValue = keyboardInfo[UIKeyboardFrameBeginUserInfoKey] as? NSValue {
             
-            let keyboardFrameEndRect = keyboardFrameEnd.CGRectValue()
-            let keyboardFrameBeginRect = keyboardFrameBegin.CGRectValue()
+            // CGRect from NSValue
+            let keyboardFrameEndRect = keyboardFrameEndValue.CGRectValue()
+            let keyboardFrameBeginRect = keyboardFrameBeginValue.CGRectValue()
             
-            let keyboardHeightChange = CGRectGetHeight(keyboardFrameBeginRect) - CGRectGetHeight(keyboardFrameEndRect)
+            // Origin y change
+            let keyboardOriginYChange = keyboardFrameBeginRect.origin.y - keyboardFrameEndRect.origin.y
             
-            print("*** Begin: \(CGRectGetHeight(keyboardFrameBeginRect))")
-            print("*** End: \(CGRectGetHeight(keyboardFrameEndRect))")
-            
-            print("*** keyboardHeightChange: \(keyboardHeightChange)")
-            
-            
-            
+            // Update contentInset and contentOffset to avoid jumps while sowing the keyboard
             tableView.contentInset = UIEdgeInsets(top: tableView.contentInset.top,
                                                   left: 0.0,
                                                   bottom: CGRectGetHeight(keyboardFrameEndRect),
                                                   right: 0.0)
             
-            let yChange = keyboardFrameBeginRect.origin.y - keyboardFrameEndRect.origin.y
-            
-            print("yChange \(yChange)")
-            
             tableView.contentOffset = CGPoint(x: tableView.contentOffset.x,
-                                              y: tableView.contentOffset.y + yChange)
-            
-            print("*** keyboardWillHide finish \(tableView.contentInset)")
-            print("*** keyboardWillHide finish \(tableView.contentOffset)")
-            
+                                              y: tableView.contentOffset.y + keyboardOriginYChange)
         }
-        
-        
     }
     
     // MARK: - Deinit
@@ -218,25 +172,19 @@ extension ViewController: UITableViewDataSource {
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return 20
+        return 21
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCellWithIdentifier(NSStringFromClass(UITableViewCell.self), forIndexPath: indexPath)
         
-        cell.textLabel?.text = "textLabel"
+        cell.textLabel?.text = "row: \(indexPath.row)"
         
         return cell
     }
 }
 
 extension ViewController: AnswerComposerDelegate {
-    
-    func didUpdatedInputAccessoryViewHeight(height: CGFloat) {
-        
-        lastInputAccessoryViewHeight = height
-        
-        print("+++++++ height: \(height)")
-    }
+
 }

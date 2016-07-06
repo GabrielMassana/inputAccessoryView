@@ -13,7 +13,10 @@ import PureLayout
 /// Constant to help text padding. Helps to do not overlap emojis.
 let GlyphLinePadding: CGFloat = 3.0
 
+/// Distance between the bottom of the view and the TextView
 let TextViewBottomInset: CGFloat = 10.0
+
+/// Distance between the top of the view and the TextView
 let TextViewTopInset: CGFloat = 10.0
 
 /// The maximum number of lines for the text view.
@@ -21,7 +24,6 @@ let MaxNumberOfLines: Int = 5
 
 protocol AnswerComposerDelegate: NSObjectProtocol {
     
-    func didUpdatedInputAccessoryViewHeight(height: CGFloat)
 }
 
 class AnswerComposer: UIView {
@@ -135,7 +137,6 @@ class AnswerComposer: UIView {
         
         textView.resignFirstResponder()
         textView.text = ""
-        invalidateIntrinsicContentSize()
     }
     
     //MARK: - Constraints
@@ -206,14 +207,12 @@ class AnswerComposer: UIView {
         // Fix the inputAccessoryView Height if it is over 5 lines.
         if numberLines > MaxNumberOfLines {
             
-            newInputAccessoryViewHeight = ((textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)) + 5.5
+            newInputAccessoryViewHeight = ((textView.font!.lineHeight + GlyphLinePadding) * CGFloat(MaxNumberOfLines)) //+ 5.5
         }
         else {
             
             newInputAccessoryViewHeight = intrinsicContentSize().height
         }
-        
-        delegate?.didUpdatedInputAccessoryViewHeight(newInputAccessoryViewHeight + TextViewBottomInset + TextViewTopInset)
         
         inputAccessoryViewHeight?.constant = newInputAccessoryViewHeight + TextViewBottomInset + TextViewTopInset
     }
